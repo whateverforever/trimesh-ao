@@ -4,7 +4,8 @@ import numpy as np
 import trimesh
 import trimesh.sample as sample
 
-model = trimesh.load("suzanne1.ply", force="mesh")
+model = trimesh.load("torus2.ply", force="mesh")
+# model = trimesh.load("suzanne1.ply", force="mesh")
 # model = trimesh.load("untitled.ply", force="mesh")
 assert isinstance(model, trimesh.Trimesh)
 # model.fix_normals()
@@ -34,7 +35,7 @@ vert_idxs, dir_idxs = np.where(normal_dir_similarities)
 del normal_dir_similarities
 
 normals = model.vertex_normals[vert_idxs]
-origins = model.vertices[vert_idxs] + normals * model.scale * 0.0001
+origins = model.vertices[vert_idxs] + normals * model.scale * 0.0005
 directions = sphere_pts[dir_idxs]
 assert len(origins) == len(directions)
 #print("origins", origins[:100])
@@ -47,9 +48,9 @@ hit_pts, idxs_rays, _ = model.ray.intersects_location(
 # don't check infinitely long rays
 succ_origs = origins[idxs_rays]
 distances = np.linalg.norm(succ_origs - hit_pts, axis=1)
-# print("num rays before filter", len(idxs_rays))
+print("num rays before filter", len(idxs_rays))
 idxs_rays = idxs_rays[distances < RELSIZE * model.scale]
-# print("num rays after  filter", len(idxs_rays))
+print("num rays after  filter", len(idxs_rays))
 
 idxs_orig = vert_idxs[idxs_rays]
 uidxs, uidxscounts = np.unique(idxs_orig, return_counts=True)
@@ -57,11 +58,9 @@ assert len(uidxs) == len(uidxscounts)
 
 counts_verts = np.zeros(len(model.vertices))
 counts_verts[uidxs] = uidxscounts
-counts_verts /= np.max(counts_verts)
-counts_verts *= 255
+counts_verts = counts_verts / np.max(counts_verts) * 255
+print("counts", np.min(counts_verts), np.median(counts_verts), np.max(counts_verts))
 counts_verts = 255 - counts_verts.astype(int).reshape(-1,1)
-# print("counts_verts", counts_verts.shape)
-# print("counts", np.max(counts_verts))
 
 colors = np.hstack([counts_verts, counts_verts, counts_verts, [[255]] * len(counts_verts)])
 # print("colors", colors)
